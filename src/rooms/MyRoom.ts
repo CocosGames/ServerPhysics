@@ -1,6 +1,7 @@
 import {Client, Room} from "colyseus";
 import {MyRoomState} from "./schema/MyRoomState";
-import {b2BodyType, b2CircleShape, b2Vec2, b2World} from "@box2d/core";
+import {b2BodyType, b2CircleShape, b2PolygonShape, b2Shape, b2ShapeType, b2Vec2, b2World} from "@box2d/core";
+import * as level from "./level.json";
 
 export class MyRoom extends Room<MyRoomState> {
 
@@ -12,7 +13,20 @@ export class MyRoom extends Room<MyRoomState> {
 
         const gravity: b2Vec2 = new b2Vec2(0, -10);
         this.world = b2World.Create(gravity);
-        this.world.CreateBody({type:b2BodyType.b2_dynamicBody}).CreateFixture({shape: new b2CircleShape(1), density:1});
+        const box: b2PolygonShape = new b2PolygonShape();
+        box.SetAsBox(1,1);
+        level.map.forEach((v, i, a) => {
+            this.world.CreateBody({
+                type: b2BodyType.b2_staticBody,
+                position: new b2Vec2(v.x, v.y)
+            }).CreateFixture({shape: box});
+        });
+
+
+        // this.world.CreateBody({type: b2BodyType.b2_dynamicBody, position:new b2Vec2(10,20)}).CreateFixture({
+        //     shape: new b2CircleShape(1),
+        //     density: 1
+        // });
 
 
         this.clock.setInterval(() => {
