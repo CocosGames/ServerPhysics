@@ -1,0 +1,90 @@
+local ColyseusClient = require "colyseus.client"
+
+local client
+local room
+
+local others = {}
+
+function init(self)
+
+    -- Add initialization code here
+    client = ColyseusClient.new("ws://localhost:2567")
+
+    -- join chat room
+    client:join("my_room", {}, function(err, _room)
+        if err then
+            print("JOIN ERROR: " .. err)
+            return
+        end
+
+        room = _room
+        msg.post("/me/player#player", "id", { id = room.sessionId })
+        room:on("statechange", function(state)
+            for id, p in pairs(state.players.items) do
+                pos = vmath.vector3()
+                if p.x and p.y then
+                    pos.x = tonumber(p.x) * 64
+                    pos.y = tonumber(p.y) * 64
+                end
+
+                if id == room.sessionId then
+                    msg.post("/me/player#player", "pos", { pos = pos })
+                elseif others[id] then
+                    go.set_position(pos, others[id])
+                else
+                    others[id] = factory.create("/player_factory#factory", pos)
+                    url = msg.url(others[id])
+                    url.fragment = "label"
+                    label.set_text(url, id)
+                end
+            end
+
+        end)
+    end)
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Learn more: https://defold.com/manuals/script/
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Learn more: https://defold.com/manuals/script/
+    -- Remove this function if not needed
+end
+
+function fixed_update(self, dt)
+    -- This function is called if 'Fixed Update Frequency' is enabled in the Engine section of game.project
+    -- Can be coupled with fixed updates of the physics simulation if 'Use Fixed Timestep' is enabled in Physics section of game.project
+    -- Add update code here
+    -- Learn more: https://defold.com/manuals/script/
+    -- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("move") then
+        if room then
+            room:send("move", { dir = message.dir })
+        end
+    end
+end
+
+function on_input(self, action_id, action)
+    -- Add input-handling code here. The game object this script is attached to
+    -- must have acquired input focus:
+    --
+    --    msg.post(".", "acquire_input_focus")
+    --
+    -- All mapped input bindings will be received. Mouse and touch input will
+    -- be received regardless of where on the screen it happened.
+    -- Learn more: https://defold.com/manuals/input/
+    -- Remove this function if not needed
+end
+
+function on_reload(self)
+    -- Add reload-handling code here
+    -- Learn more: https://defold.com/manuals/hot-reload/
+    -- Remove this function if not needed
+end

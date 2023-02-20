@@ -24,7 +24,7 @@ export class MyRoom extends Room<MyRoomState> {
         });
 
         this.clock.setInterval(() => {
-            this.world.Step(1 / 60, {velocityIterations: 10, positionIterations: 10});
+            this.world.Step(1 / 20, {velocityIterations: 10, positionIterations: 10});
             this.playerBodies.forEach((b,k,m)=>{
                 let pos = b.GetPosition();
                 let p = this.state.players.get(k);
@@ -38,10 +38,11 @@ export class MyRoom extends Room<MyRoomState> {
 
         console.log("Room created!");
 
-        this.onMessage("type", (client, message) => {
-            //
-            // handle "type" message
-            //
+        this.onMessage("move", (client, message) => {
+            if (message.dir == "l")
+                this.playerBodies.get(client.sessionId).SetLinearVelocity(new b2Vec2(-2, 0));
+            else if (message.dir == "r")
+                this.playerBodies.get(client.sessionId).SetLinearVelocity(new b2Vec2(2, 0));
         });
 
     }
@@ -52,7 +53,7 @@ export class MyRoom extends Room<MyRoomState> {
         let b = this.world.CreateBody({type: b2BodyType.b2_dynamicBody, position:new b2Vec2(20,20)});
         b.SetFixedRotation(true);
         b.CreateFixture({
-            shape: new b2CircleShape(1),
+            shape: new b2CircleShape(0.2),
             density: 1
         });
         this.state.players.set(client.sessionId, new Player());

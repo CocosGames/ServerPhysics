@@ -13,10 +13,6 @@ local anim_idle = hash("idle")
 local anim_jump = hash("jump")
 local anim_fall = hash("fall")
 
-local ColyseusClient = require "colyseus.client"
-
-local client
-local room
 
 function init(self)
     -- this lets us handle input in this script
@@ -28,34 +24,6 @@ function init(self)
 
     self.anim = nil
 
-    -- Add initialization code here
-    client = ColyseusClient.new("ws://localhost:2567")
-
-    -- join chat room
-    client:join("my_room", {}, function(err, _room)
-        if err then
-            print("JOIN ERROR: " .. err)
-            return
-        end
-
-        room = _room
-
-        room:on("statechange", function(state)
-            print(room.sessionId)
-            --for id, v in pairs(state.players.items) do
-            --    print(id)
-            --end
-            if state.players[room.sessionId] then
-                pprint(state.players[room.sessionId])
-                pos = vmath.vector3()
-                pos.x = tonumber(state.players[room.sessionId].x)*64;
-                pos.y = tonumber(state.players[room.sessionId].y)*64;
-                pos.z = 0
-                go.set_position(pos)
-                print(pos.x, pos.y)
-            end
-        end)
-    end)
 end
 
 local function play_animation(self, anim)
@@ -97,19 +65,19 @@ function update(self, dt)
 end
 
 function on_message(self, message_id, message, sender)
-
+    if message_id == hash("pos") then
+        go.set_position(message.pos)
+    elseif message_id == hash("id") then
+        label.set_text("#label", message.id)
+    end
 end
 
 function on_input(self, action_id, action)
     if action_id == input_left then
-        walk(self, -action.value)
+        msg.post("/level#client", "move", { dir = "l" })
     elseif action_id == input_right then
-        walk(self, action.value)
+        msg.post("/level#client", "move", { dir = "r" })
     elseif action_id == input_jump then
-        if action.pressed then
-            jump(self)
-        elseif action.released then
-            abort_jump(self)
-        end
+
     end
 end
