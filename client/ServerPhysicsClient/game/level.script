@@ -64,11 +64,16 @@ function fixed_update(self, dt)
 end
 
 function on_message(self, message_id, message, sender)
-    if message_id == hash("move") then
-        if room then
+    if room then
+        if message_id == hash("move") then
             room:send("move", { dir = message.dir })
+        elseif message_id == hash("stop") then
+            room:send("stop", { dir = message.dir })
+         elseif message_id == hash("jump") then
+            room:send("jump", {})
         end
     end
+
 end
 
 function on_input(self, action_id, action)

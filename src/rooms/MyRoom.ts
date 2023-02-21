@@ -11,6 +11,7 @@ export class MyRoom extends Room<MyRoomState> {
 
     onCreate(options: any) {
         this.setState(new MyRoomState());
+        this.setPatchRate(1000/24);
         this.autoDispose = false;
         const gravity: b2Vec2 = new b2Vec2(0, -10);
         this.world = b2World.Create(gravity);
@@ -24,7 +25,8 @@ export class MyRoom extends Room<MyRoomState> {
         });
 
         this.clock.setInterval(() => {
-            this.world.Step(1 / 20, {velocityIterations: 10, positionIterations: 10});
+            // this.world.ClearForces();
+            this.world.Step(1 / 5, {velocityIterations: 5, positionIterations: 5});
             this.playerBodies.forEach((b,k,m)=>{
                 let pos = b.GetPosition();
                 let p = this.state.players.get(k);
@@ -39,12 +41,20 @@ export class MyRoom extends Room<MyRoomState> {
         console.log("Room created!");
 
         this.onMessage("move", (client, message) => {
+            let v = this.playerBodies.get(client.sessionId).GetLinearVelocity();
             if (message.dir == "l")
-                this.playerBodies.get(client.sessionId).SetLinearVelocity(new b2Vec2(-2, 0));
+                this.playerBodies.get(client.sessionId).SetLinearVelocity(new b2Vec2(-3, v.y));
             else if (message.dir == "r")
-                this.playerBodies.get(client.sessionId).SetLinearVelocity(new b2Vec2(2, 0));
+                this.playerBodies.get(client.sessionId).SetLinearVelocity(new b2Vec2(3, v.y));
         });
-
+        this.onMessage("stop", (client, message) => {
+            let v = this.playerBodies.get(client.sessionId).GetLinearVelocity();
+            this.playerBodies.get(client.sessionId).SetLinearVelocity(new b2Vec2(0, v.y));
+        });
+        this.onMessage("jump", (client, message) => {
+            let c = this.playerBodies.get(client.sessionId).GetWorldCenter();
+            this.playerBodies.get(client.sessionId).ApplyLinearImpulse(new b2Vec2(0,10), c);
+        });
     }
 
     onJoin(client: Client, options: any) {
@@ -52,10 +62,11 @@ export class MyRoom extends Room<MyRoomState> {
 
         let b = this.world.CreateBody({type: b2BodyType.b2_dynamicBody, position:new b2Vec2(20,20)});
         b.SetFixedRotation(true);
-        b.CreateFixture({
-            shape: new b2CircleShape(0.2),
-            density: 1
-        });
+        b.SetLinearDamping(0);
+        let s1:b2Shape = new b2CircleShape(0.4).Set(new b2Vec2(-0.4,0.4));
+        // let s2:b2Shape = new b2CircleShape(0.4).Set(new b2Vec2(-0.4,0.8));
+        b.CreateFixture({shape: s1, density: 1, friction:0});
+        // b.CreateFixture({shape: s2, density: 1, friction:0});
         this.state.players.set(client.sessionId, new Player());
         this.playerBodies.set(client.sessionId, b);
     }
@@ -63,6 +74,7 @@ export class MyRoom extends Room<MyRoomState> {
     onLeave(client: Client, consented: boolean) {
         console.log(client.sessionId, "left!");
         this.state.players.delete(client.sessionId);
+        this.world.DestroyBody(this.playerBodies.get(client.sessionId))
         this.playerBodies.delete(client.sessionId);
     }
 
