@@ -26,7 +26,7 @@ export class MyRoom extends Room<MyRoomState> {
 
         this.clock.setInterval(() => {
             // this.world.ClearForces();
-            this.world.Step(1 / 5, {velocityIterations: 5, positionIterations: 5});
+            this.world.Step(1 / 10, {velocityIterations: 5, positionIterations: 5});
             this.playerBodies.forEach((b,k,m)=>{
                 let pos = b.GetPosition();
                 let p = this.state.players.get(k);
@@ -36,7 +36,7 @@ export class MyRoom extends Room<MyRoomState> {
                     p.y = pos.y;
                 }
             })
-        }, 100);
+        }, 1000/24);
 
         console.log("Room created!");
 
@@ -53,7 +53,7 @@ export class MyRoom extends Room<MyRoomState> {
         });
         this.onMessage("jump", (client, message) => {
             let c = this.playerBodies.get(client.sessionId).GetWorldCenter();
-            this.playerBodies.get(client.sessionId).ApplyLinearImpulse(new b2Vec2(0,10), c);
+            this.playerBodies.get(client.sessionId).ApplyLinearImpulse(new b2Vec2(0,5), c);
         });
     }
 
